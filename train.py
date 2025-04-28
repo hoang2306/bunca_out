@@ -313,9 +313,9 @@ def test(model, dataloader, conf):
         # score_list.append(score)
         # bundle_list.append(predict_list)
 
-    user_list = torch.cat(user_list) 
-    bundle_list = torch.cat(bundle_list)
-    score_list = torch.cat(score_list)
+    # user_list = torch.cat(user_list) 
+    # bundle_list = torch.cat(bundle_list)
+    # score_list = torch.cat(score_list)
 
     metrics = {}
     for m, topk_res in tmp_metrics.items():
