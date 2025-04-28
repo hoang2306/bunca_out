@@ -175,7 +175,7 @@ def main():
 
             if epoch % conf["test_interval"] == 0:
                 metrics = {}
-                metrics["val"], user_val_list, bundle_val_list, score_val_list = test(model, dataset.val_loader, conf)
+                metrics["val"], _, _, _ = test(model, dataset.val_loader, conf)
                 metrics["test"], user_test_list, bundle_test_list, score_test_list = test(model, dataset.test_loader, conf)
                 best_metrics, best_perform, best_epoch = log_metrics(
                     conf, model, metrics, run, log_path, checkpoint_model_path,
@@ -226,16 +226,7 @@ def write_log(run, log_path, topk, step, metrics):
     print(test_str)
 
 
-def write_user_bundle_predict_list(conf, users_list, bundle_list, score_list):
-    # users_list shape: [num_users]
-    # bundle_list shape: [num_users, 100]
-    log_path = "./log/%s/%s" % (conf["dataset"], conf["model"]) 
-    # save 3 matrices
-    print('---------------STARTING WRITE PREDICT LIST----------------')
-    torch.save(users_list, log_path + '/user_list.pt')
-    torch.save(bundle_list, log_path + '/bundle_list.pt')
-    torch.save(score_list, log_path + '/score_list.pt')
-    print('------------------user-bundle list predict has write---------------------')
+
 
 def log_metrics(conf, model, metrics, run, log_path, checkpoint_model_path, checkpoint_conf_path, epoch, batch_anchor,
                 best_metrics, best_perform, best_epoch, user_list, bundle_list, score_list):
@@ -280,7 +271,19 @@ def log_metrics(conf, model, metrics, run, log_path, checkpoint_model_path, chec
 
     return best_metrics, best_perform, best_epoch
 
+def write_user_bundle_predict_list(conf, users_list, bundle_list, score_list):
+    # users_list shape: [num_users]
+    # bundle_list shape: [num_users, 100]
+    log_path = "./log/%s/%s" % (conf["dataset"], conf["model"]) 
+    # save 3 matrices
+    print('---------------STARTING WRITE PREDICT LIST----------------')
+    torch.save(users_list, log_path + '/user_list.pt')
+    torch.save(bundle_list, log_path + '/bundle_list.pt')
+    torch.save(score_list, log_path + '/score_list.pt')
+    print('------------------user-bundle list predict has write---------------------')
 
+
+@torch.no_grad()
 def test(model, dataloader, conf):
     tmp_metrics = {}
     for m in ["recall", "ndcg"]:
@@ -301,13 +304,20 @@ def test(model, dataloader, conf):
 
         pred_b = model.evaluate(rs, users.to(device))
         pred_b -= 1e8 * train_mask_u_b.to(device)
+
+        del train_mask_u_b
+
         tmp_metrics = get_metrics(tmp_metrics, ground_truth_u_b, pred_b, conf["topk"])
 
         user_cpu = users.cpu()
+        del users 
+
         print(f'user cpu device: {user_cpu.device}')
         user_list.append(user_cpu)
 
         preb_cpu = pred_b.cpu()
+        del pred_b
+        torch.cuda.empty_cache()
         print(f'pred_cpu device: {preb_cpu.shape}')
         score, predict_list = torch.topk(preb_cpu, 100)
 
