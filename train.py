@@ -249,12 +249,12 @@ def log_metrics(conf, model, metrics, run, log_path, checkpoint_model_path, chec
     if metrics["val"]["recall"][topk_] > best_metrics["val"]["recall"][topk_] and metrics["val"]["ndcg"][topk_] > \
             best_metrics["val"]["ndcg"][topk_]:
         
-        # write_user_bundle_predict_list(
-        #     conf=conf, 
-        #     users_list=user_list, 
-        #     bundle_list=bundle_list, 
-        #     score_list=score_list
-        # )
+        write_user_bundle_predict_list(
+            conf=conf, 
+            users_list=user_list, 
+            bundle_list=bundle_list, 
+            score_list=score_list
+        )
 
         torch.save(model.state_dict(), checkpoint_model_path)
         dump_conf = dict(conf)
@@ -297,25 +297,34 @@ def test(model, dataloader, conf):
     score_list = [] 
 
     for users, ground_truth_u_b, train_mask_u_b in dataloader:
-        # user_list.append(users.cpu())
+        
 
         pred_b = model.evaluate(rs, users.to(device))
         pred_b -= 1e8 * train_mask_u_b.to(device)
         tmp_metrics = get_metrics(tmp_metrics, ground_truth_u_b, pred_b, conf["topk"])
 
-        # preb_cpu = pred_b.cpu()
-        # print(f'pred_cpu device: {preb_cpu.shape}')
-        # score, predict_list = torch.topk(preb_cpu, 100)
+        user_cpu = users.cpu()
+        print(f'user cpu device: {user_cpu.device}')
+        user_list.append(user_cpu)
 
-        # print(f'score device: {score.device}')
-        # print(f'predict_list device: {predict_list.device}')
+        preb_cpu = pred_b.cpu()
+        print(f'pred_cpu device: {preb_cpu.shape}')
+        score, predict_list = torch.topk(preb_cpu, 100)
+
+        print(f'score device: {score.device}')
+        print(f'predict_list device: {predict_list.device}')
         
-        # score_list.append(score)
-        # bundle_list.append(predict_list)
+        score_list.append(score)
+        bundle_list.append(predict_list)
 
-    # user_list = torch.cat(user_list) 
-    # bundle_list = torch.cat(bundle_list)
-    # score_list = torch.cat(score_list)
+    user_list = torch.cat(user_list) 
+    bundle_list = torch.cat(bundle_list)
+    score_list = torch.cat(score_list)
+
+    print(f'*****')
+    print(f'user_list cat device: {user_list.device}')
+    print(f'bundle_list cat device: {bundle_list.device}')
+    print(f'score_list cat device: {score_list.device}')
 
     metrics = {}
     for m, topk_res in tmp_metrics.items():
