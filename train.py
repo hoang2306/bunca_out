@@ -297,13 +297,19 @@ def test(model, dataloader, conf):
     score_list = [] 
 
     for users, ground_truth_u_b, train_mask_u_b in dataloader:
-        user_list.append(users)
+        user_list.append(users.cpu())
 
         pred_b = model.evaluate(rs, users.to(device))
         pred_b -= 1e8 * train_mask_u_b.to(device)
         tmp_metrics = get_metrics(tmp_metrics, ground_truth_u_b, pred_b, conf["topk"])
 
-        score, predict_list = torch.topk(pred_b, 100)
+        preb_cpu = pred_b.cpu()
+        print(f'pred_cpu device: {preb_cpu.shape}')
+        score, predict_list = torch.topk(preb_cpu, 100)
+
+        print(f'score device: {score.device}')
+        print(f'predict_list device: {predict_list.device}')
+        
         score_list.append(score)
         bundle_list.append(predict_list)
 
