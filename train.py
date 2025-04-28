@@ -312,17 +312,17 @@ def test(model, dataloader, conf):
         user_cpu = users.cpu()
         del users 
 
-        print(f'user cpu device: {user_cpu.device}')
+        # print(f'user cpu device: {user_cpu.device}')
         user_list.append(user_cpu)
 
         preb_cpu = pred_b.cpu()
         del pred_b
         torch.cuda.empty_cache()
-        print(f'pred_cpu device: {preb_cpu.shape}')
+        # print(f'pred_cpu device: {preb_cpu.shape}')
         score, predict_list = torch.topk(preb_cpu, 100)
 
-        print(f'score device: {score.device}')
-        print(f'predict_list device: {predict_list.device}')
+        # print(f'score device: {score.device}')
+        # print(f'predict_list device: {predict_list.device}')
         
         score_list.append(score)
         bundle_list.append(predict_list)
@@ -331,10 +331,10 @@ def test(model, dataloader, conf):
     bundle_list = torch.cat(bundle_list)
     score_list = torch.cat(score_list)
 
-    print(f'*****')
-    print(f'user_list cat device: {user_list.device}')
-    print(f'bundle_list cat device: {bundle_list.device}')
-    print(f'score_list cat device: {score_list.device}')
+    # print(f'*****')
+    # print(f'user_list cat device: {user_list.device}')
+    # print(f'bundle_list cat device: {bundle_list.device}')
+    # print(f'score_list cat device: {score_list.device}')
 
     metrics = {}
     for m, topk_res in tmp_metrics.items():
